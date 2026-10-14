@@ -1,5 +1,9 @@
+import os
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
 from fastapi import FastAPI
 from models.skill_vector import compute_skill_vector, fake_submissions
+from models.solve_probability import predict as predict_solve
 app = FastAPI()
 
 @app.get("/health")
@@ -8,7 +12,8 @@ def health():
 
 @app.post("/predict/solve-probability")
 def solve_probability(payload: dict):
-    return {"solveProbability": 0.5}
+    p, source = predict_solve(payload["player"], payload["problem"])
+    return {"solveProbability": p, "source": source}
 
 @app.post("/predict/match-outcome")
 def match_outcome(payload: dict):
