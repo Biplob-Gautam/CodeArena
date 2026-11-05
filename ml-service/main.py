@@ -7,6 +7,7 @@ from models.skill_vector import compute_skill_vector, fake_submissions
 from models.solve_probability import predict as predict_solve
 from models.match_outcome import predict as predict_match
 from models.problem_selection import select_problem
+from models.insights import compute_insights
 
 app = FastAPI()
 
@@ -40,3 +41,9 @@ def select_problem_endpoint(payload: dict):
         payload["playerA"], payload["playerB"], payload["candidates"],
         exclude_ids=payload.get("excludeProblemIds"), seed=payload.get("seed"),
     )
+
+
+@app.post("/insights")
+def insights(payload: dict):
+    """Profile analytics. The backend sends the player's history; this service stores nothing."""
+    return compute_insights(payload["submissions"], payload.get("matches"))
