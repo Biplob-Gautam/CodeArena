@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from models.skill_vector import compute_skill_vector, fake_submissions
 from models.solve_probability import predict as predict_solve
 from models.match_outcome import predict as predict_match
+from models.problem_selection import select_problem
 
 app = FastAPI()
 
@@ -30,3 +31,12 @@ def match_outcome(payload: dict):
 @app.get("/skill-vector/{user_id}")
 def skill_vector(user_id: str):
     return compute_skill_vector(user_id, fake_submissions)
+
+
+@app.post("/select-problem")
+def select_problem_endpoint(payload: dict):
+    """Pick the best problem for a matched pair from a candidate pool."""
+    return select_problem(
+        payload["playerA"], payload["playerB"], payload["candidates"],
+        exclude_ids=payload.get("excludeProblemIds"), seed=payload.get("seed"),
+    )
