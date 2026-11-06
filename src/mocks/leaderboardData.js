@@ -1,0 +1,48 @@
+
+export const mockLeaderboardData = [
+  {
+    id: "user-101",
+    rank: 1,
+    username: "AlgoKing",
+    rating: 1920,
+    wins: 85,
+    losses: 15,
+    winRate: 85,
+  },
+  {
+    id: "user-102",
+    rank: 2,
+    username: "CodeNinja",
+    rating: 1850,
+    wins: 78,
+    losses: 22,
+    winRate: 78,
+  },
+  {
+    id: "user-103",
+    rank: 3,
+    username: "DevMaster",
+    rating: 1780,
+    wins: 72,
+    losses: 28,
+    winRate: 72,
+  },
+  {
+    id: "user-104",
+    rank: 4,
+    username: "ByteHunter",
+    rating: 1690,
+    wins: 65,
+    losses: 35,
+    winRate: 65,
+  },
+  {
+    id: "user-001",
+    rank: 5,
+    username: "Sagnik",
+    rating: 1420,
+    wins: 32,
+    losses: 16,
+    winRate: 66.7,
+  },
+];
