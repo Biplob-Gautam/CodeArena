@@ -11,7 +11,7 @@ function ProfileHeader({ user, onEditProfile }) {
     <section className="overflow-hidden rounded-2xl border border-slate-800 bg-[#101827]">
 
       {/* Cover Background */}
-      <div className="relative h-36 bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 md:h-48">
+      <div className="relative h-36 bg-linear-to-r from-blue-700 via-indigo-600 to-violet-700 md:h-48">
         <div className="absolute inset-0 bg-black/10" />
 
         <div className="absolute right-6 top-5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur-md">
@@ -27,7 +27,7 @@ function ProfileHeader({ user, onEditProfile }) {
           {/* Avatar and Details */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
 
-            <div className="-mt-12 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-4 border-[#101827] bg-gradient-to-br from-blue-500 to-violet-600 text-3xl font-extrabold text-white shadow-xl md:h-28 md:w-28">
+            <div className="-mt-12 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-4 border-[#101827] bg-linear-to-br from-blue-500 to-violet-600 text-3xl font-extrabold text-white shadow-xl md:h-28 md:w-28">
               {initials}
             </div>
 

@@ -39,7 +39,7 @@ function CodeEditor({
   const lineCount = Math.max(code.split("\n").length, 1);
 
   return (
-    <section className="flex min-h-[500px] flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#101827]">
+    <section className="flex min-h-125 flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#101827]">
 
       {/* Editor Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 p-4">
@@ -93,7 +93,7 @@ function CodeEditor({
           autoCorrect="off"
           aria-label="Code editor"
           placeholder="Write your solution here..."
-          className="min-h-[400px] w-full resize-none bg-transparent p-4 font-mono text-sm leading-6 text-green-300 outline-none placeholder:text-slate-600"
+          className="min-h-100 w-full resize-none bg-transparent p-4 font-mono text-sm leading-6 text-green-300 outline-none placeholder:text-slate-600"
         />
 
       </div>
@@ -108,7 +108,7 @@ function CodeEditor({
         <button
           onClick={onSubmit}
           disabled={submitting || !code.trim()}
-          className="rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-3 text-xs font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-linear-to-r from-blue-600 to-violet-600 px-6 py-3 text-xs font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Submitting..." : "▶ Submit Solution"}
         </button>

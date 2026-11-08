@@ -57,7 +57,7 @@ function BattleRoom({ onExit }) {
       {/* Battle Header */}
       <BattleHeader onExit={onExit} />
 
-      <main className="mx-auto max-w-[1800px] space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-450 space-y-6 p-4 md:p-6">
 
         {/* Battle Overview */}
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -120,7 +120,7 @@ function BattleRoom({ onExit }) {
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
 
           {/* Left: Problem */}
-          <div className="min-h-[550px]">
+          <div className="min-h-137.5">
             <ProblemPanel />
           </div>
 

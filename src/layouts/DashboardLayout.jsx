@@ -84,7 +84,7 @@ function DashboardLayout({ children }) {
 
           <button
             onClick={() => navigate("/profile")}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-600 font-bold text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-violet-600 font-bold text-white"
             title="View Profile"
           >
             S

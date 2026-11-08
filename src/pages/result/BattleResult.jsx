@@ -100,7 +100,7 @@ function BattleResult() {
 
           <button
             onClick={() => navigate("/matchmaking")}
-            className="rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-7 py-3 font-semibold text-white shadow-lg shadow-blue-500/10 transition hover:scale-[1.02] hover:from-blue-500 hover:to-violet-500"
+            className="rounded-xl bg-linear-to-r from-blue-600 to-violet-600 px-7 py-3 font-semibold text-white shadow-lg shadow-blue-500/10 transition hover:scale-[1.02] hover:from-blue-500 hover:to-violet-500"
           >
             Play Again
           </button>

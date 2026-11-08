@@ -96,7 +96,7 @@ function Matchmaking() {
 
           <div className="flex items-center gap-4">
 
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 text-xl font-bold">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-violet-600 text-xl font-bold">
               S
             </div>
 
@@ -128,7 +128,7 @@ function Matchmaking() {
         {status === "idle" && (
           <div className="rounded-2xl border border-slate-800 bg-[#101827] p-8 text-center md:p-14">
 
-            <div className="mx-auto mb-7 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500/20 to-violet-500/20">
+            <div className="mx-auto mb-7 flex h-24 w-24 items-center justify-center rounded-3xl bg-linear-to-br from-blue-500/20 to-violet-500/20">
               <span className="text-5xl text-blue-400">
                 ⚔
               </span>
@@ -172,7 +172,7 @@ function Matchmaking() {
             {/* Find Opponent Button */}
             <button
               onClick={handleFindOpponent}
-              className="mt-10 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-10 py-4 text-sm font-extrabold text-white shadow-lg shadow-blue-500/20 transition hover:scale-105 hover:opacity-90"
+              className="mt-10 rounded-xl bg-linear-to-r from-blue-600 to-violet-600 px-10 py-4 text-sm font-extrabold text-white shadow-lg shadow-blue-500/20 transition hover:scale-105 hover:opacity-90"
             >
               ⚔ Find Opponent
             </button>

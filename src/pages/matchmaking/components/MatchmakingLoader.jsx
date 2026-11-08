@@ -4,7 +4,7 @@ function MatchmakingLoader({
   onCancel,
 }) {
   return (
-    <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-slate-800 bg-[#101827] p-8 text-center">
+    <div className="flex min-h-105 flex-col items-center justify-center rounded-2xl border border-slate-800 bg-[#101827] p-8 text-center">
 
       {/* Animated Search Circle */}
       <div className="relative mb-8 flex h-32 w-32 items-center justify-center">
@@ -13,7 +13,7 @@ function MatchmakingLoader({
 
         <div className="absolute inset-2 animate-pulse rounded-full border-2 border-blue-500/40" />
 
-        <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-violet-600 shadow-lg shadow-blue-500/20">
+        <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-blue-600 to-violet-600 shadow-lg shadow-blue-500/20">
           <span className="text-3xl font-bold text-white">
             {"</>"}
           </span>

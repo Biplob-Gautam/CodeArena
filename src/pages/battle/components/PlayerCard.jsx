@@ -25,7 +25,7 @@ function PlayerCard({
 
         {/* Avatar */}
         <div className="relative">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 text-sm font-bold text-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-violet-600 text-sm font-bold text-white">
             {initials}
           </div>
 

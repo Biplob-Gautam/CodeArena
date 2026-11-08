@@ -28,7 +28,7 @@ function BattleLayout({ children }) {
 
       {/* Battle Content */}
       <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6">
-        <div className="mx-auto w-full max-w-[1600px]">
+        <div className="mx-auto w-full max-w-400">
           {children}
         </div>
       </main>

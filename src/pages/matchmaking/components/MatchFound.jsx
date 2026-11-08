@@ -87,7 +87,7 @@ function MatchFound({
 
         <button
           onClick={onAccept}
-          className="rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-10 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition hover:scale-[1.02] hover:opacity-90"
+          className="rounded-xl bg-linear-to-r from-blue-600 to-violet-600 px-10 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition hover:scale-[1.02] hover:opacity-90"
         >
           Accept & Enter Battle →
         </button>

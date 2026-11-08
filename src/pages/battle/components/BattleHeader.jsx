@@ -5,7 +5,7 @@ function BattleHeader({ battleId = "CA-2026-001", onExit }) {
 
       {/* Logo */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 font-bold text-white">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-violet-600 font-bold text-white">
           {"</>"}
         </div>
 

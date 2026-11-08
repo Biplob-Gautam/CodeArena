@@ -59,7 +59,7 @@ function RatingCard() {
         aria-valuemax={100}
       >
         <div
-          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-violet-500 transition-all"
+          className="h-full rounded-full bg-linear-to-r from-blue-500 to-violet-500 transition-all"
           style={{ width: `${progress}%` }}
         />
       </div>

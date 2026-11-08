@@ -64,7 +64,7 @@ function RecentBattles() {
 
       {/* Battle Table */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[600px] text-left">
+        <table className="w-full min-w-150 text-left">
 
           <thead>
             <tr className="border-b border-slate-700 text-[10px] font-bold tracking-wider text-slate-500">

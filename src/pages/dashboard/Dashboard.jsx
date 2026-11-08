@@ -55,7 +55,7 @@ function Dashboard() {
         {/* Navbar */}
         <Navbar />
 
-        <main className="mx-auto max-w-[1600px] space-y-7 p-5 md:p-8">
+        <main className="mx-auto max-w-400 space-y-7 p-5 md:p-8">
 
           {/* Page Heading */}
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -218,7 +218,7 @@ function Dashboard() {
                   "Matchmaking will be connected to the backend."
                 );
               }}
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 py-3.5 text-sm font-bold text-white transition hover:opacity-90"
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-blue-600 to-violet-600 py-3.5 text-sm font-bold text-white transition hover:opacity-90"
             >
               Find Opponent →
             </button>

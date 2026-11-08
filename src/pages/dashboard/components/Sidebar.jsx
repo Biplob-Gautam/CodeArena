@@ -9,11 +9,11 @@ const menuItems = [
 
 function Sidebar({ activePage, onNavigate }) {
   return (
-    <aside className="sticky top-0 hidden h-screen w-[250px] shrink-0 flex-col border-r border-slate-800 bg-[#0b101c] px-4 py-6 lg:flex">
+    <aside className="sticky top-0 hidden h-screen w-62.5 shrink-0 flex-col border-r border-slate-800 bg-[#0b101c] px-4 py-6 lg:flex">
 
       {/* Logo */}
       <div className="mb-12 flex items-center gap-3 px-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 font-bold text-white">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-violet-600 font-bold text-white">
           {"</>"}
         </div>
 
@@ -79,7 +79,7 @@ function Sidebar({ activePage, onNavigate }) {
       {/* Bottom Section */}
       <div className="mt-auto">
 
-        <div className="rounded-xl border border-slate-700 bg-gradient-to-br from-blue-500/10 to-violet-500/10 p-4">
+        <div className="rounded-xl border border-slate-700 bg-linear-to-br from-blue-500/10 to-violet-500/10 p-4">
           <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
             ✦
           </div>
@@ -93,7 +93,7 @@ function Sidebar({ activePage, onNavigate }) {
           </p>
 
           <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-700">
-            <div className="h-full w-[68%] rounded-full bg-gradient-to-r from-blue-500 to-violet-500" />
+            <div className="h-full w-[68%] rounded-full bg-linear-to-r from-blue-500 to-violet-500" />
           </div>
 
           <p className="mt-2 text-[10px] text-slate-500">

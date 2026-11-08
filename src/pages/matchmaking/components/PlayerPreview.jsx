@@ -31,7 +31,7 @@ function PlayerPreview({
 
         <div className="relative">
           <div
-            className={`flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${
+            className={`flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br ${
               isCurrentPlayer
                 ? "from-blue-500 to-cyan-500"
                 : "from-violet-500 to-purple-600"

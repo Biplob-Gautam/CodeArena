@@ -1,7 +1,7 @@
 
 function WelcomeSection({ username, onStartBattle }) {
   return (
-    <section className="relative mb-8 flex min-h-[240px] items-center justify-between overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-r from-[#142440] via-[#151a32] to-[#21153a] p-7 md:p-9">
+    <section className="relative mb-8 flex min-h-60 items-center justify-between overflow-hidden rounded-2xl border border-blue-500/20 bg-linear-to-r from-[#142440] via-[#151a32] to-[#21153a] p-7 md:p-9">
 
       {/* Background Decoration */}
       <div className="pointer-events-none absolute -right-10 -top-24 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
@@ -32,7 +32,7 @@ function WelcomeSection({ username, onStartBattle }) {
 
           <button
             onClick={onStartBattle}
-            className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition hover:-translate-y-1 hover:shadow-blue-500/30"
+            className="flex items-center gap-3 rounded-xl bg-linear-to-r from-blue-600 to-violet-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition hover:-translate-y-1 hover:shadow-blue-500/30"
           >
             ⚔ Find a Battle
             <span>→</span>

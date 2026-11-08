@@ -294,7 +294,7 @@ function Profile() {
 
           <div className="overflow-x-auto">
 
-            <table className="w-full min-w-[550px] text-left">
+            <table className="w-full min-w-137.5 text-left">
 
               <thead>
                 <tr className="border-b border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-500">
