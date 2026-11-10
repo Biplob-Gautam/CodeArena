@@ -1,113 +1,121 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import ProfileHeader from "./components/profileHeader";
 import ProfileStats from "./components/ProfileStats";
+import userService from "../../services/userService";
+import authStore from "../../store/authStore";
 
 function Profile() {
   const navigate = useNavigate();
-
-  // User Information
-  const [user, setUser] = useState({
-    username: "Sagnik",
-    email: "sagnik@example.com",
-    joinedDate: "January 2026",
-    rating: 1420,
-    rank: 256,
-    level: "Intermediate",
-    about:
-      "Passionate programmer who loves solving challenging problems and competing with developers. Always learning and improving my coding skills."
-  });
-
-  // Profile Statistics
-  const stats = {
-    totalBattles: 48,
-    wins: 32,
-    losses: 16,
-    winRate: 66.7,
-    streak: 4,
-    bestRating: 1580
-  };
-
-  // Edit Profile States
+  const [user, setUser] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [recentBattles, setRecentBattles] = useState([]);
+  const [loadError, setLoadError] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
-  const [editUsername, setEditUsername] = useState(user.username);
-  const [editAbout, setEditAbout] = useState(user.about);
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editBio, setEditBio] = useState("");
 
-  // Recent Battles
-  const recentBattles = [
-    {
-      opponent: "CodeNinja",
-      result: "Won",
-      rating: "+25",
-      date: "Today"
-    },
-    {
-      opponent: "DevMaster",
-      result: "Lost",
-      rating: "-12",
-      date: "Yesterday"
-    },
-    {
-      opponent: "AlgoKing",
-      result: "Won",
-      rating: "+20",
-      date: "2 days ago"
-    },
-    {
-      opponent: "ByteHunter",
-      result: "Won",
-      rating: "+18",
-      date: "3 days ago"
-    }
-  ];
+  useEffect(() => {
+    let active = true;
 
-  // Achievements
-  const achievements = [
-    {
-      icon: "🏆",
-      title: "First Victory",
-      description: "Won your first coding battle"
-    },
-    {
-      icon: "🔥",
-      title: "On Fire",
-      description: "Won 4 battles consecutively"
-    },
-    {
-      icon: "⚔️",
-      title: "Battle Veteran",
-      description: "Completed 40+ battles"
-    },
-    {
-      icon: "⭐",
-      title: "Rising Star",
-      description: "Reached 1500 Elo rating"
-    }
-  ];
+    Promise.all([
+      userService.getProfile(),
+      userService.getUserStats(),
+      userService.getDashboard(),
+    ])
+      .then(([profileResponse, statsResponse, dashboardResponse]) => {
+        if (!active) return;
+        setUser(profileResponse.user);
+        setStats(statsResponse.stats);
+        setRecentBattles(dashboardResponse.dashboard.recentBattles);
+      })
+      .catch((error) => {
+        if (active) setLoadError(error.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
-  // Open Edit Profile
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleEditProfile = () => {
-    setEditUsername(user.username);
-    setEditAbout(user.about);
+    setEditDisplayName(user.displayName || "");
+    setEditBio(user.bio || "");
+    setSaveError("");
     setShowEdit(true);
   };
 
-  // Save Profile Changes
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
+    setSaveError("");
 
-    if (!editUsername.trim()) return;
-
-    setUser((previous) => ({
-      ...previous,
-      username: editUsername.trim(),
-      about: editAbout.trim()
-    }));
-
-    setShowEdit(false);
+    try {
+      const response = await userService.updateProfile({
+        displayName: editDisplayName.trim() || null,
+        bio: editBio.trim() || null,
+      });
+      const updatedUser = { ...user, ...response.user };
+      setUser(updatedUser);
+      authStore.setUser(updatedUser);
+      setShowEdit(false);
+    } catch (error) {
+      setSaveError(error.message);
+    }
   };
+
+  const achievements = [
+    stats?.wins > 0 && {
+      icon: "🏆",
+      title: "First Victory",
+      description: "Won your first coding battle",
+    },
+    stats?.currentWinStreak >= 3 && {
+      icon: "🔥",
+      title: "On Fire",
+      description: "Won 3 battles in a row",
+    },
+    stats?.totalBattles >= 25 && {
+      icon: "⚔️",
+      title: "Battle Veteran",
+      description: "Completed 25 coding battles",
+    },
+    user?.rating >= 1400 && {
+      icon: "⭐",
+      title: "Rising Star",
+      description: "Reached a rating of 1400",
+    },
+  ].filter(Boolean);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#080b14] px-4 py-8 text-center text-slate-400">
+        Loading your profile...
+      </main>
+    );
+  }
+
+  if (loadError || !user) {
+    return (
+      <main className="min-h-screen bg-[#080b14] px-4 py-8 text-center text-red-300">
+        <p role="alert">
+          Could not load your profile{loadError ? `: ${loadError}` : "."}
+        </p>
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="mt-4 rounded-lg border border-slate-700 px-5 py-3 text-xs font-semibold text-slate-300"
+        >
+          Back to Dashboard
+        </button>
+      </main>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#080b14] px-4 py-8 text-white md:px-8">
@@ -161,18 +169,17 @@ function Profile() {
               className="space-y-5"
             >
 
-              {/* Username */}
+              {/* Display name */}
               <div>
                 <label className="mb-2 block text-xs font-semibold text-slate-400">
-                  Username
+                  Display name
                 </label>
 
                 <input
                   type="text"
-                  value={editUsername}
-                  onChange={(e) => setEditUsername(e.target.value)}
+                  value={editDisplayName}
+                  onChange={(e) => setEditDisplayName(e.target.value)}
                   className="w-full rounded-lg border border-slate-700 bg-[#080b14] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
-                  required
                 />
               </div>
 
@@ -184,11 +191,17 @@ function Profile() {
 
                 <textarea
                   rows="3"
-                  value={editAbout}
-                  onChange={(e) => setEditAbout(e.target.value)}
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
                   className="w-full resize-none rounded-lg border border-slate-700 bg-[#080b14] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
                 />
               </div>
+
+              {saveError && (
+                <p role="alert" className="text-sm text-red-300">
+                  Could not save your profile: {saveError}
+                </p>
+              )}
 
               {/* Buttons */}
               <div className="flex flex-wrap gap-3">
@@ -227,7 +240,7 @@ function Profile() {
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-slate-400">
-            {user.about}
+            {user.bio || "No bio has been added yet."}
           </p>
 
         </section>
@@ -247,9 +260,9 @@ function Profile() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-            {achievements.map((achievement, index) => (
+            {achievements.map((achievement) => (
               <div
-                key={index}
+                key={achievement.title}
                 className="rounded-2xl border border-slate-800 bg-[#101827] p-5 transition duration-300 hover:-translate-y-1 hover:border-yellow-500/40"
               >
 
@@ -267,6 +280,11 @@ function Profile() {
 
               </div>
             ))}
+            {achievements.length === 0 && (
+              <p className="text-sm text-slate-500">
+                Keep competing to unlock achievements.
+              </p>
+            )}
 
           </div>
         </section>
@@ -287,7 +305,7 @@ function Profile() {
             </div>
 
             <span className="rounded-lg bg-blue-500/10 px-3 py-2 text-xs font-bold text-blue-400">
-              Last 4 Battles
+              Last {recentBattles.length} Battles
             </span>
 
           </div>
@@ -319,44 +337,67 @@ function Profile() {
               </thead>
 
               <tbody>
-                {recentBattles.map((battle, index) => (
+                {recentBattles.map((battle) => {
+                  const ratingChange = Number(battle.ratingChange) || 0;
+                  const resultLabel = {
+                    WIN: "Won",
+                    LOSS: "Lost",
+                    DRAW: "Draw",
+                  }[battle.result] || "Unknown";
+                  const resultStyle =
+                    battle.result === "WIN"
+                      ? "bg-green-500/10 text-green-400"
+                      : battle.result === "LOSS"
+                        ? "bg-red-500/10 text-red-400"
+                        : "bg-slate-500/10 text-slate-300";
+                  const ratingStyle =
+                    ratingChange > 0
+                      ? "text-green-400"
+                      : ratingChange < 0
+                        ? "text-red-400"
+                        : "text-slate-400";
+
+                  return (
                   <tr
-                    key={index}
+                    key={battle.id}
                     className="border-b border-slate-800/60 last:border-0"
                   >
 
                     <td className="px-4 py-5 text-sm font-semibold text-white">
-                      {battle.opponent}
+                      {battle.opponent?.username || "Opponent unavailable"}
                     </td>
 
                     <td className="px-4 py-5">
                       <span
-                        className={`rounded-md px-3 py-1 text-xs font-bold ${
-                          battle.result === "Won"
-                            ? "bg-green-500/10 text-green-400"
-                            : "bg-red-500/10 text-red-400"
-                        }`}
+                        className={`rounded-md px-3 py-1 text-xs font-bold ${resultStyle}`}
                       >
-                        {battle.result}
+                        {resultLabel}
                       </span>
                     </td>
 
                     <td
-                      className={`px-4 py-5 text-sm font-bold ${
-                        battle.rating.startsWith("+")
-                          ? "text-green-400"
-                          : "text-red-400"
-                      }`}
+                      className={`px-4 py-5 text-sm font-bold ${ratingStyle}`}
                     >
-                      {battle.rating}
+                      {ratingChange > 0 ? "+" : ""}
+                      {ratingChange}
                     </td>
 
                     <td className="px-4 py-5 text-xs text-slate-500">
-                      {battle.date}
+                      {battle.endedAt
+                        ? new Date(battle.endedAt).toLocaleDateString()
+                        : "Date unavailable"}
                     </td>
 
                   </tr>
-                ))}
+                  );
+                })}
+                {recentBattles.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">
+                      No completed battles yet.
+                    </td>
+                  </tr>
+                )}
               </tbody>
 
             </table>

@@ -10,14 +10,41 @@ import BattleResult from "../pages/result/BattleResult";
 
 import ProtectedRoute from "./ProtectedRoute";
 
+function PublicRoute({ children }) {
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
+
+  return token ? <Navigate to="/dashboard" replace /> : children;
+}
+
 function AppRoutes() {
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route
+        path="/"
+        element={<Navigate to={token ? "/dashboard" : "/login"} replace />}
+      />
 
       {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
+        }
+      />
 
       {/* Protected Routes */}
       <Route

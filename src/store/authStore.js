@@ -1,8 +1,10 @@
 
 const initialState = {
   user: null,
-  token: localStorage.getItem("token"),
-  isAuthenticated: Boolean(localStorage.getItem("token")),
+  token: localStorage.getItem("token") || sessionStorage.getItem("token"),
+  isAuthenticated: Boolean(
+    localStorage.getItem("token") || sessionStorage.getItem("token"),
+  ),
 };
 
 let state = { ...initialState };
@@ -38,8 +40,10 @@ const authStore = {
   setToken(token) {
     if (token) {
       localStorage.setItem("token", token);
+      sessionStorage.removeItem("token");
     } else {
       localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
     }
 
     state = {
@@ -51,9 +55,15 @@ const authStore = {
     notify();
   },
 
-  login(user, token) {
+  login(user, token, rememberMe = true) {
     if (token) {
-      localStorage.setItem("token", token);
+      if (rememberMe) {
+        localStorage.setItem("token", token);
+        sessionStorage.removeItem("token");
+      } else {
+        sessionStorage.setItem("token", token);
+        localStorage.removeItem("token");
+      }
     }
 
     state = {
@@ -67,6 +77,7 @@ const authStore = {
 
   logout() {
     localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
 
     state = {
       user: null,

@@ -1,29 +1,5 @@
 
-const starterCode = {
-  JavaScript: `function twoSum(nums, target) {
-  // Write your solution here
-
-}`,
-  Python: `def two_sum(nums, target):
-    # Write your solution here
-    pass`,
-  Java: `class Solution {
-    public int[] twoSum(int[] nums, int target) {
-        // Write your solution here
-        return new int[]{};
-    }
-}`,
-  "C++": `class Solution {
-public:
-    vector<int> twoSum(vector<int>& nums, int target) {
-        // Write your solution here
-        return {};
-    }
-};`,
-  C: `// Write your solution here
-
-`,
-};
+import starterCode from "../starterCode";
 
 function CodeEditor({
   language,
@@ -31,6 +7,7 @@ function CodeEditor({
   setCode,
   onSubmit,
   submitting = false,
+  disabled = false,
 }) {
   const resetCode = () => {
     setCode(starterCode[language] || "");
@@ -107,10 +84,10 @@ function CodeEditor({
 
         <button
           onClick={onSubmit}
-          disabled={submitting || !code.trim()}
+          disabled={disabled || submitting || !code.trim()}
           className="rounded-lg bg-linear-to-r from-blue-600 to-violet-600 px-6 py-3 text-xs font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? "Submitting..." : "▶ Submit Solution"}
+          {submitting ? "Judging..." : "▶ Submit Solution"}
         </button>
 
       </div>
@@ -119,5 +96,4 @@ function CodeEditor({
   );
 }
 
-export { starterCode };
 export default CodeEditor;

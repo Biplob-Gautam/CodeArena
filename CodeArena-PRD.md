@@ -445,7 +445,10 @@ The primary winner criterion is:
 > The first player to submit a solution that passes all required hidden
 > test cases wins.
 
-The backend must assign an authoritative ordering to submissions.
+The backend must assign an authoritative, monotonically increasing sequence
+to submissions before execution begins. Timestamps remain useful for display,
+but winner determination must use this sequence so equal or delayed timestamps
+cannot change the result.
 
 Example:
 

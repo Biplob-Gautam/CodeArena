@@ -19,6 +19,10 @@ function ProblemPanel({
     Medium: "bg-yellow-500/10 text-yellow-400",
     Hard: "bg-red-500/10 text-red-400",
   };
+  const constraints = Array.isArray(problem.constraints)
+    ? problem.constraints
+    : [];
+  const example = Array.isArray(problem.examples) ? problem.examples[0] : null;
 
   return (
     <section className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#101827]">
@@ -69,10 +73,10 @@ function ProblemPanel({
 
           <div className="rounded-lg border border-slate-700 bg-[#080b14] p-4 font-mono text-xs leading-7">
             <p className="text-slate-500">Input:</p>
-            <p className="text-green-400">{problem.input}</p>
+            <p className="text-green-400">{example?.input ?? problem.input}</p>
 
             <p className="mt-2 text-slate-500">Output:</p>
-            <p className="text-blue-400">{problem.output}</p>
+            <p className="text-blue-400">{example?.output ?? problem.output}</p>
           </div>
         </div>
 
@@ -82,7 +86,7 @@ function ProblemPanel({
           </h3>
 
           <ul className="list-inside list-disc space-y-2 text-xs leading-6 text-slate-400">
-            {problem.constraints.map((constraint, index) => (
+            {constraints.map((constraint, index) => (
               <li key={index}>{constraint}</li>
             ))}
           </ul>

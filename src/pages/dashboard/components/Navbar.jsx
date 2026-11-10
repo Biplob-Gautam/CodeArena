@@ -1,24 +1,48 @@
 
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router-dom";
+import authService from "../../../services/authService";
+import authStore from "../../../store/authStore";
 
 function Navbar() {
   const navigate = useNavigate();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const auth = useSyncExternalStore(authStore.subscribe, authStore.getState);
 
-  const email =
-    sessionStorage.getItem("demoUser") ||
-    localStorage.getItem("demoUser") ||
-    "user@codearena.com";
+  useEffect(() => {
+    if (!auth.token || auth.user) return;
 
-  const username = email.split("@")[0];
+    let active = true;
+    authService
+      .getCurrentUser()
+      .then(({ user }) => {
+        if (active) authStore.setUser(user);
+      })
+      .catch((error) => {
+        console.error("Could not load the current user:", error);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [auth.token, auth.user]);
+
+  const username =
+    auth.user?.displayName || auth.user?.username || "CodeArena player";
+  const email = auth.user?.email || "";
 
   const handleLogout = () => {
-    sessionStorage.removeItem("demoUser");
-    localStorage.removeItem("demoUser");
-    navigate("/login");
+    authService
+      .logout()
+      .catch((error) => {
+        console.error("Server logout failed; clearing the local session:", error);
+      })
+      .finally(() => {
+        authStore.logout();
+        navigate("/login", { replace: true });
+      });
   };
 
   return (

@@ -1,23 +1,21 @@
 
 import { useEffect, useState } from "react";
 
-function BattleTimer({ initialMinutes = 30, onTimeUp }) {
-  const [seconds, setSeconds] = useState(initialMinutes * 60);
-  const [running, setRunning] = useState(true);
+function BattleTimer({ initialSeconds = 1800, onTimeUp }) {
+  const [seconds, setSeconds] = useState(initialSeconds);
 
   useEffect(() => {
-    if (!running || seconds <= 0) return;
+    if (seconds <= 0) return;
 
     const timer = setInterval(() => {
       setSeconds((previous) => previous - 1);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [running, seconds]);
+  }, [seconds]);
 
   useEffect(() => {
     if (seconds === 0) {
-      setRunning(false);
       onTimeUp?.();
     }
   }, [seconds, onTimeUp]);

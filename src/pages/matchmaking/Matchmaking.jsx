@@ -2,61 +2,98 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import MatchFound from "./components/MatchFound";
 import MatchmakingLoader from "./components/MatchmakingLoader";
+import authService from "../../services/authService";
+import {
+  connectSocket,
+  disconnectSocket,
+  emitSocket,
+  onSocket,
+} from "../../sockets/socket";
 
 function Matchmaking() {
   const navigate = useNavigate();
-
-  // Matchmaking states: idle, searching, found
   const [status, setStatus] = useState("idle");
+  const [player, setPlayer] = useState(null);
+  const [error, setError] = useState("");
 
-  // Current player details
-  const player = {
-    username: "Sagnik",
-    rating: 1420,
-    wins: 32,
-    battles: 48,
-  };
-
-  // Demo opponent details
-  const opponent = {
-    username: "CodeNinja",
-    rating: 1450,
-    wins: 35,
-    battles: 52,
-  };
-
-  // Simulated matchmaking process
   useEffect(() => {
-    if (status !== "searching") return;
+    let active = true;
+    connectSocket();
 
-    const timeout = setTimeout(() => {
-      setStatus("found");
-    }, 5000);
+    const onWaiting = () => {
+      if (active) setStatus("searching");
+    };
+    const onMatched = ({ battle } = {}) => {
+      if (!active || !battle?.id) return;
+      navigate(`/battle/${battle.id}`);
+    };
+    const onCancelled = () => {
+      if (active) setStatus("idle");
+    };
+    const onError = ({ message } = {}) => {
+      if (!active) return;
+      setError(message || "Matchmaking is unavailable. Please try again.");
+      setStatus("idle");
+    };
+    const onConnectError = () => {
+      if (!active) return;
+      setError("Could not connect to matchmaking. Check that the backend is running.");
+      setStatus("idle");
+    };
 
-    return () => clearTimeout(timeout);
-  }, [status]);
+    const removeListeners = [
+      onSocket("matchmaking:waiting", onWaiting),
+      onSocket("matchmaking:status", ({ status: nextStatus, battle } = {}) => {
+        if (!active) return;
+        if (nextStatus === "MATCHED" && battle?.id) {
+          navigate(`/battle/${battle.id}`);
+        } else if (nextStatus === "WAITING") {
+          setStatus("searching");
+        }
+      }),
+      onSocket("matchmaking:matched", onMatched),
+      onSocket("matchmaking:cancelled", onCancelled),
+      onSocket("matchmaking:error", onError),
+      onSocket("connect_error", onConnectError),
+      onSocket("connect", () => {
+        if (active) setError("");
+      }),
+    ];
 
-  // Start matchmaking
+    authService
+      .getCurrentUser()
+      .then(({ user }) => {
+        if (active) setPlayer(user);
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message);
+      });
+
+    return () => {
+      active = false;
+      removeListeners.forEach((remove) => remove());
+      disconnectSocket();
+    };
+  }, [navigate]);
+
   const handleFindOpponent = () => {
+    setError("");
     setStatus("searching");
+    if (!emitSocket("matchmaking:find")) {
+      setStatus("idle");
+      setError("Matchmaking is still connecting. Please try again.");
+    }
   };
 
-  // Cancel matchmaking
   const handleCancelSearch = () => {
-    setStatus("idle");
+    if (!emitSocket("matchmaking:cancel")) {
+      setError("Matchmaking is not connected. Please try again.");
+    }
   };
 
-  // Decline the found match
-  const handleDeclineMatch = () => {
-    setStatus("idle");
-  };
-
-  // Accept match and enter battle
-  const handleAcceptMatch = () => {
-    navigate("/battle/demo-battle-001");
-  };
+  const username = player?.displayName || player?.username || "Loading...";
+  const rating = Math.round(player?.rating ?? 1500);
 
   return (
     <div className="min-h-screen bg-[#080b14] px-4 py-8 text-white md:px-8">
@@ -97,12 +134,12 @@ function Matchmaking() {
           <div className="flex items-center gap-4">
 
             <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-violet-600 text-xl font-bold">
-              S
+              {username.slice(0, 1).toUpperCase()}
             </div>
 
             <div>
               <h2 className="font-bold text-white">
-                {player.username}
+                {username}
               </h2>
 
               <p className="text-xs text-slate-500">
@@ -114,7 +151,7 @@ function Matchmaking() {
 
           <div className="text-right">
             <p className="text-2xl font-extrabold text-blue-400">
-              {player.rating}
+              {rating}
             </p>
 
             <p className="text-[10px] font-bold tracking-widest text-slate-500">
@@ -159,7 +196,7 @@ function Matchmaking() {
 
               <div className="rounded-xl border border-slate-700 bg-[#080b14] p-4">
                 <p className="text-xl font-bold text-violet-400">
-                  30 Min
+                  15 Min
                 </p>
 
                 <p className="mt-1 text-xs text-slate-500">
@@ -172,7 +209,8 @@ function Matchmaking() {
             {/* Find Opponent Button */}
             <button
               onClick={handleFindOpponent}
-              className="mt-10 rounded-xl bg-linear-to-r from-blue-600 to-violet-600 px-10 py-4 text-sm font-extrabold text-white shadow-lg shadow-blue-500/20 transition hover:scale-105 hover:opacity-90"
+              disabled={!player}
+              className="mt-10 rounded-xl bg-linear-to-r from-blue-600 to-violet-600 px-10 py-4 text-sm font-extrabold text-white shadow-lg shadow-blue-500/20 transition hover:scale-105 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               ⚔ Find Opponent
             </button>
@@ -187,19 +225,15 @@ function Matchmaking() {
         {/* Searching State */}
         {status === "searching" && (
           <MatchmakingLoader
-            rating={player.rating}
+            rating={rating}
             onCancel={handleCancelSearch}
           />
         )}
 
-        {/* Match Found State */}
-        {status === "found" && (
-          <MatchFound
-            player={player}
-            opponent={opponent}
-            onAccept={handleAcceptMatch}
-            onDecline={handleDeclineMatch}
-          />
+        {error && (
+          <p role="alert" className="mt-4 text-center text-sm text-red-400">
+            {error}
+          </p>
         )}
 
         {/* Footer */}

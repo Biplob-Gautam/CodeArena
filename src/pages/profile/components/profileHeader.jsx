@@ -6,6 +6,12 @@ function ProfileHeader({ user, onEditProfile }) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+  const memberSince = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric",
+      })
+    : "Unknown";
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-800 bg-[#101827]">
@@ -34,7 +40,7 @@ function ProfileHeader({ user, onEditProfile }) {
             <div className="sm:pb-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-extrabold text-white">
-                  {user?.username || "CodeArena User"}
+                  {user?.displayName || user?.username || "CodeArena User"}
                 </h1>
 
                 <span className="rounded-full bg-green-500/10 px-3 py-1 text-[10px] font-bold text-green-400">
@@ -43,11 +49,15 @@ function ProfileHeader({ user, onEditProfile }) {
               </div>
 
               <p className="mt-1 text-sm text-slate-400">
-                {user?.email || "user@example.com"}
+                @{user?.username}
               </p>
 
+              {user?.email && (
+                <p className="mt-1 text-xs text-slate-500">{user.email}</p>
+              )}
+
               <p className="mt-2 text-xs text-slate-500">
-                Member since {user?.joinedDate || "January 2026"}
+                Member since {memberSince}
               </p>
             </div>
 
@@ -65,32 +75,23 @@ function ProfileHeader({ user, onEditProfile }) {
         </div>
 
         {/* Rating Information */}
-        <div className="mt-7 grid grid-cols-2 gap-4 border-t border-slate-800 pt-6 sm:grid-cols-3">
+        <div className="mt-7 grid grid-cols-2 gap-4 border-t border-slate-800 pt-6">
 
           <div>
             <p className="text-[10px] font-bold tracking-widest text-slate-500">
               ELO RATING
             </p>
             <p className="mt-2 text-2xl font-extrabold text-blue-400">
-              {user?.rating ?? 1420}
+              {user?.rating?.toLocaleString() ?? "—"}
             </p>
           </div>
 
           <div>
             <p className="text-[10px] font-bold tracking-widest text-slate-500">
-              GLOBAL RANK
+              BEST RATING
             </p>
             <p className="mt-2 text-2xl font-extrabold text-violet-400">
-              #{user?.rank ?? 256}
-            </p>
-          </div>
-
-          <div className="col-span-2 sm:col-span-1">
-            <p className="text-[10px] font-bold tracking-widest text-slate-500">
-              SKILL LEVEL
-            </p>
-            <p className="mt-2 text-2xl font-extrabold text-yellow-400">
-              {user?.level || "Intermediate"}
+              {user?.bestRating?.toLocaleString() ?? "—"}
             </p>
           </div>
 

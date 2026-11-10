@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ProblemDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum BattleStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ParticipantResult {
+  PENDING
+  WIN
+  LOSS
+  DRAW
+}
+
+enum SubmissionStatus {
+  QUEUED
+  PROCESSING
+  ACCEPTED
+  WRONG_ANSWER
+  TIME_LIMIT_EXCEEDED
+  MEMORY_LIMIT_EXCEEDED
+  RUNTIME_ERROR
+  COMPILATION_ERROR
+  INTERNAL_ERROR
+  CANCELLED
+}
+
+enum RatingChangeReason {
+  INITIAL_PLACEMENT
+  BATTLE_RESULT
+  ADMIN_ADJUSTMENT
+}
+
+model User {
+  id                    String          @id @default(cuid())
+  email                 String          @unique
+  username              String          @unique
+  passwordHash          String
+  displayName           String?
+  avatarUrl             String?
+  bio                   String?
+  role                  UserRole        @default(USER)
+  isActive              Boolean         @default(true)
+  emailVerifiedAt        DateTime?
+  rating                 Float                @default(1500)
+  ratingDeviation        Float                @default(350)
+  ratingVolatility       Float                @default(0.06)
+  bestRating             Float                @default(1500)
+  placementMatchesPlayed Int            @default(0)
+  leetcodeUsername       String?
+  leetcodeContestRating  Float?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  battleParticipants     BattleParticipant[]
+  ratingHistories        RatingHistory[]
+
+  @@index([rating(sort: Desc)])
+  @@index([createdAt])
+}
+
+model Problem {
+  id                   String            @id @default(cuid())
+  slug                 String            @unique
+  title                String
+  difficulty           ProblemDifficulty
+  description          String
+  inputFormat          String
+  outputFormat         String
+  constraints          Json
+  examples             Json
+  tags                 String[]          @default([])
+  timeLimitMs          Int               @default(2000)
+  memoryLimitMb        Int               @default(256)
+  battleDurationSeconds Int               @default(900)
+  isPublished           Boolean           @default(false)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  testCases             TestCase[]
+  battles               Battle[]
+
+  @@index([difficulty, isPublished])
+  @@index([isPublished, createdAt])
+}
+
+model TestCase {
+  id             String   @id @default(cuid())
+  problemId      String
+  position       Int
+  input          String
+  expectedOutput String
+  isHidden       Boolean  @default(true)
+  points         Int      @default(1)
+  createdAt      DateTime @default(now())
+  problem        Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, position])
+  @@index([problemId, isHidden])
+}
+
+model Battle {
+  id              String               @id @default(cuid())
+  problemId       String
+  status          BattleStatus         @default(WAITING)
+  durationSeconds Int
+  startsAt        DateTime?
+  endsAt          DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  problem         Problem              @relation(fields: [problemId], references: [id], onDelete: Restrict)
+  participants    BattleParticipant[]
+  ratingHistories RatingHistory[]
+
+  @@index([status, createdAt])
+  @@index([problemId, status])
+}
+
+model BattleParticipant {
+  id                    String            @id @default(cuid())
+  battleId              String
+  userId                String
+  result                ParticipantResult @default(PENDING)
+  acceptedAt            DateTime?
+  totalSubmissions Int               @default(0)
+  passedTestCases  Int               @default(0)
+  ratingBefore     Float?
+  ratingAfter      Float?
+  ratingChange     Float?
+  joinedAt         DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  battle           Battle            @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  submissions      Submission[]
+
+  @@unique([battleId, userId])
+  @@index([userId, joinedAt])
+  @@index([battleId, result])
+}
+
+model Submission {
+  id              String           @id @default(cuid())
+  submissionOrder Int              @unique @default(autoincrement())
+  participantId   String
+  language        String
+  sourceCode      String           @db.Text
+  status          SubmissionStatus @default(QUEUED)
+  judge0Token     String?          @unique
+  stdout          String?          @db.Text
+  stderr          String?          @db.Text
+  compileOutput   String?          @db.Text
+  executionTimeMs Float?
+  memoryUsedKb    Int?
+  passedTestCases Int              @default(0)
+  totalTestCases  Int?
+  submittedAt     DateTime         @default(now())
+  evaluatedAt     DateTime?
+  participant     BattleParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([participantId, submittedAt(sort: Desc)])
+  @@index([participantId, submissionOrder])
+  @@index([status, submittedAt])
+}
+
+model RatingHistory {
+  id                    String              @id @default(cuid())
+  userId                String
+  battleId              String?
+  reason                RatingChangeReason
+  ratingBefore          Float
+  ratingAfter           Float
+  ratingDeviationBefore Float
+  ratingDeviationAfter  Float
+  volatilityBefore      Float
+  volatilityAfter       Float
+  createdAt             DateTime            @default(now())
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  battle                Battle?             @relation(fields: [battleId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, battleId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([battleId])
+}

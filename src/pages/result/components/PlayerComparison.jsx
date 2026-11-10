@@ -15,6 +15,11 @@ function PlayerComparison({ players }) {
       key: "submissions",
       suffix: "",
     },
+    {
+      label: "Memory Used",
+      key: "memoryUsedKb",
+      suffix: " KB",
+    },
   ];
 
   return (
@@ -49,6 +54,9 @@ function PlayerComparison({ players }) {
 
             <p className="mt-1 text-sm text-slate-400">
               Rating: {player.rating}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Latest submission: {player.submissionStatus}
             </p>
 
             {player.isWinner && (

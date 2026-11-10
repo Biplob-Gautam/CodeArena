@@ -1,88 +1,59 @@
+import { io } from "socket.io-client";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 const SOCKET_URL =
-  import.meta.env.VITE_SOCKET_URL || "ws://localhost:5000";
+  import.meta.env.VITE_SOCKET_URL ||
+  API_BASE_URL.replace(/\/api\/?$/, "");
 
 let socket = null;
-const listeners = new Map();
+
+function getToken() {
+  return localStorage.getItem("token") || sessionStorage.getItem("token");
+}
 
 export function connectSocket() {
-  if (
-    socket &&
-    (socket.readyState === WebSocket.OPEN ||
-      socket.readyState === WebSocket.CONNECTING)
-  ) {
-    return socket;
+  const token = getToken();
+
+  if (socket && socket.auth.token !== token) {
+    socket.disconnect();
+    socket = null;
   }
 
-  const token = localStorage.getItem("token");
-
-  const url = new URL(SOCKET_URL);
-
-  if (token) {
-    url.searchParams.set("token", token);
+  if (!socket) {
+    socket = io(SOCKET_URL, {
+      autoConnect: false,
+      auth: { token },
+      transports: ["websocket", "polling"],
+    });
   }
 
-  socket = new WebSocket(url.toString());
-
-  socket.onopen = () => {
-    console.log("CodeArena socket connected");
-  };
-
-  socket.onmessage = (event) => {
-    try {
-      const message = JSON.parse(event.data);
-      const callbacks = listeners.get(message.event) || [];
-
-      callbacks.forEach((callback) => callback(message.data));
-    } catch (error) {
-      console.error("Invalid socket message:", error);
-    }
-  };
-
-  socket.onerror = (error) => {
-    console.error("Socket error:", error);
-  };
-
-  socket.onclose = () => {
-    console.log("CodeArena socket disconnected");
-  };
+  if (!socket.connected && !socket.active) {
+    socket.connect();
+  }
 
   return socket;
 }
 
 export function emitSocket(event, data = {}) {
-  if (!socket || socket.readyState !== WebSocket.OPEN) {
-    console.error("Socket is not connected");
-    return false;
-  }
-
-  socket.send(JSON.stringify({ event, data }));
+  if (!socket) return false;
+  socket.emit(event, data);
   return true;
 }
 
 export function onSocket(event, callback) {
-  if (!listeners.has(event)) {
-    listeners.set(event, []);
+  if (!socket) {
+    throw new Error("Connect the socket before registering event listeners.");
   }
 
-  listeners.get(event).push(callback);
-
-  return () => {
-    const callbacks = listeners.get(event) || [];
-    listeners.set(
-      event,
-      callbacks.filter((item) => item !== callback)
-    );
-  };
+  socket.on(event, callback);
+  return () => socket?.off(event, callback);
 }
 
 export function disconnectSocket() {
-  if (socket) {
-    socket.close();
-    socket = null;
-  }
-
-  listeners.clear();
+  if (!socket) return;
+  socket.disconnect();
+  socket = null;
 }
 
 export function getSocket() {

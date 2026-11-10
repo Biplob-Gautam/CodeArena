@@ -1,4 +1,7 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import api from "../../services/api";
+import authService from "../../services/authService";
 
 import ResultSummary from "./components/ResultSummary";
 import PlayerComparison from "./components/PlayerComparison";
@@ -6,44 +9,114 @@ import RatingChange from "./components/RatingChange";
 
 function BattleResult() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const battleId = searchParams.get("battleId");
+  const [battleResult, setBattleResult] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [error, setError] = useState("");
 
-  // Demo battle result data
+  useEffect(() => {
+    let active = true;
+    if (!battleId) return undefined;
+
+    Promise.all([
+      api.get(`/results/${encodeURIComponent(battleId)}`),
+      authService.getCurrentUser(),
+    ])
+      .then(([{ result: data }, { user }]) => {
+        if (active) {
+          setBattleResult(data);
+          setCurrentUserId(user.id);
+        }
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message || "Could not load battle results.");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [battleId]);
+
+  const players = useMemo(
+    () =>
+      (battleResult?.players ?? []).map((player) => {
+        const submission =
+          player.firstAcceptedSubmission ?? player.latestSubmission;
+        return {
+          username:
+            player.user.displayName || player.user.username || "Player",
+          rating: Math.round(player.ratingBefore ?? player.user.rating ?? 1500),
+          testCases: submission?.passedTestCases ?? player.passedTestCases ?? 0,
+          executionTime: submission?.executionTimeMs
+            ? Number((submission.executionTimeMs / 1000).toFixed(3))
+            : 0,
+          submissions: player.totalSubmissions,
+          submissionStatus: player.latestSubmission?.status ?? "NO_SUBMISSIONS",
+          memoryUsedKb: submission?.memoryUsedKb ?? 0,
+          isWinner: player.result === "WIN",
+          previousRating: Math.round(player.ratingBefore ?? player.user.rating ?? 1500),
+          ratingChange: Math.round(player.ratingChange ?? 0),
+          newRating: Math.round(player.ratingAfter ?? player.user.rating ?? 1500),
+        };
+      }),
+    [battleResult],
+  );
+
+  const ownPlayer = battleResult?.players?.find(
+    (player) => player.user?.id === currentUserId,
+  );
+  const status = ownPlayer?.result === "WIN"
+    ? "won"
+    : ownPlayer?.result === "DRAW"
+    ? "draw"
+    : "lost";
+  const startsAt = battleResult?.startsAt
+    ? new Date(battleResult.startsAt)
+    : null;
+  const endsAt = battleResult?.endsAt ? new Date(battleResult.endsAt) : null;
+  const durationSeconds =
+    startsAt && endsAt
+      ? Math.min(
+          battleResult.durationSeconds,
+          Math.max(0, Math.floor((endsAt.getTime() - startsAt.getTime()) / 1000)),
+        )
+      : battleResult?.durationSeconds ?? 0;
   const result = {
-    status: "won",
-    problemTitle: "Two Sum",
-    difficulty: "Easy",
-    duration: "18 min 24 sec",
-    date: "November 4, 2026",
-    winner: "Sagnik",
+    status,
+    problemTitle: battleResult?.problem?.title ?? "—",
+    difficulty: battleResult?.problem?.difficulty ?? "—",
+    duration: `${Math.floor(durationSeconds / 60)} min ${durationSeconds % 60} sec`,
+    date: endsAt ? endsAt.toLocaleDateString() : "—",
+    winner:
+      players.find((player) => player.isWinner)?.username ?? null,
   };
 
-  // Demo player comparison data
-  const players = [
-    {
-      username: "Sagnik",
-      rating: 1420,
-      testCases: 10,
-      executionTime: 1.2,
-      submissions: 2,
-      isWinner: true,
+  if (!battleResult && !error && battleId) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#080b14] text-slate-300">
+        Loading battle results...
+      </div>
+    );
+  }
 
-      previousRating: 1420,
-      ratingChange: 25,
-      newRating: 1445,
-    },
-    {
-      username: "CodeNinja",
-      rating: 1450,
-      testCases: 7,
-      executionTime: 2.4,
-      submissions: 4,
-      isWinner: false,
-
-      previousRating: 1450,
-      ratingChange: -15,
-      newRating: 1435,
-    },
-  ];
+  if (!battleId || error || battleResult?.status !== "COMPLETED") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#080b14] px-4 text-center text-white">
+        <p role="alert" className="text-red-400">
+          {error || (!battleId
+            ? "A battle ID is required to view results."
+            : "This battle has not completed yet.")}
+        </p>
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="rounded-xl border border-slate-700 px-7 py-3 font-semibold text-slate-300"
+        >
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#080b14] px-4 py-8 text-white sm:px-6 lg:px-10">
@@ -72,7 +145,7 @@ function BattleResult() {
           </div>
 
           <span className="w-fit rounded-full border border-green-500/20 bg-green-500/10 px-4 py-2 text-sm font-medium text-green-400">
-            Battle Completed
+            Battle Completed · {battleId}
           </span>
         </div>
 

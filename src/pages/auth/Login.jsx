@@ -2,9 +2,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import Logo from "../../components/Logo";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
+import Logo from "../../components/Logo";
+import authService from "../../services/authService";
+import authStore from "../../store/authStore";
 
 function Login() {
   const navigate = useNavigate();
@@ -13,19 +15,27 @@ function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setIsSubmitting(true);
 
-    // Demo authentication only.
-    // Replace this with your NestJS API later.
-    sessionStorage.setItem("demoUser", email);
-
-    if (rememberMe) {
-      localStorage.setItem("demoUser", email);
+    try {
+      const loginId = email.trim();
+      const credentials = loginId.includes("@")
+        ? { email: loginId, password }
+        : { username: loginId, password };
+      const data = await authService.login(credentials, { rememberMe });
+      authStore.login(data.user, data.token, rememberMe);
+      navigate("/dashboard", { replace: true });
+    } catch (requestError) {
+      setError(requestError.message || "Unable to log in. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    navigate("/dashboard");
   };
 
   return (
@@ -61,12 +71,12 @@ function Login() {
 
           <form onSubmit={handleLogin} className="space-y-5">
 
-            {/* Email */}
+            {/* Email or username */}
             <Input
-              label="Email Address"
-              name="email"
-              type="email"
-              placeholder="you@example.com"
+              label="Email or username"
+              name="loginId"
+              type="text"
+              placeholder="you@example.com or username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -115,19 +125,21 @@ function Login() {
                 Remember me
               </label>
 
-              <button
-                type="button"
-                onClick={() => alert("Password recovery will be implemented with the backend.")}
-                className="font-medium text-blue-400 hover:text-blue-300"
-              >
-                Forgot Password?
-              </button>
-
             </div>
 
+            {error && (
+              <div
+                role="alert"
+                className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs text-red-400"
+              >
+                {error}
+              </div>
+            )}
+
             {/* Login Button */}
-            <Button type="submit" className="mt-2">
-              Login to CodeArena <span>→</span>
+            <Button type="submit" className="mt-2" disabled={isSubmitting}>
+              {isSubmitting ? "Logging in..." : "Login to CodeArena"}
+              {!isSubmitting && <span>→</span>}
             </Button>
 
           </form>

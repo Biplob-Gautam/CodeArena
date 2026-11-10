@@ -1,6 +1,8 @@
 
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router-dom";
+import authStore from "../../store/authStore";
+import userService from "../../services/userService";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
@@ -12,18 +14,32 @@ import QuickActions from "./components/QuickActions";
 
 function Dashboard() {
   const navigate = useNavigate();
+  const auth = useSyncExternalStore(authStore.subscribe, authStore.getState);
 
   const [activePage, setActivePage] = useState("Dashboard");
   const [showBattleModal, setShowBattleModal] = useState(false);
+  const [dashboard, setDashboard] = useState(null);
+  const [loadError, setLoadError] = useState("");
 
-  const email =
-    sessionStorage.getItem("demoUser") ||
-    localStorage.getItem("demoUser") ||
-    "Sagnik";
+  useEffect(() => {
+    let active = true;
 
-  const username = email.includes("@")
-    ? email.split("@")[0]
-    : email;
+    userService
+      .getDashboard()
+      .then((response) => {
+        if (active) setDashboard(response.dashboard);
+      })
+      .catch((error) => {
+        if (active) setLoadError(error.message);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const username =
+    auth.user?.displayName || auth.user?.username || "Player";
 
   const handleNavigation = (page) => {
     setActivePage(page);
@@ -83,16 +99,18 @@ function Dashboard() {
             onStartBattle={() => setShowBattleModal(true)}
           />
 
+          {loadError && (
+            <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+              Could not load your dashboard: {loadError}
+            </p>
+          )}
+
           {/* Performance Heading */}
           <div>
             <div className="mb-1 flex items-center justify-between">
               <h2 className="text-lg font-bold text-white">
                 Your Performance
               </h2>
-
-              <span className="rounded-md border border-slate-700 px-2 py-1 text-[9px] font-bold tracking-wider text-slate-400">
-                DEMO DATA
-              </span>
             </div>
 
             <p className="text-xs text-slate-500">
@@ -101,12 +119,12 @@ function Dashboard() {
           </div>
 
           {/* Statistics */}
-          <StatsCards />
+          <StatsCards stats={dashboard?.stats} user={dashboard?.user} />
 
           {/* Rating and Quick Actions */}
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
 
-            <RatingCard />
+            <RatingCard user={dashboard?.user} />
 
             <QuickActions
               onStartBattle={() => setShowBattleModal(true)}
@@ -115,7 +133,10 @@ function Dashboard() {
           </div>
 
           {/* Recent Battles */}
-          <RecentBattles />
+          <RecentBattles
+            battles={dashboard?.recentBattles}
+            loading={!dashboard && !loadError}
+          />
 
           {/* Footer */}
           <footer className="flex flex-col justify-between gap-3 border-t border-slate-800 pt-5 text-[10px] text-slate-500 sm:flex-row">
@@ -214,9 +235,7 @@ function Dashboard() {
             <button
               onClick={() => {
                 setShowBattleModal(false);
-                alert(
-                  "Matchmaking will be connected to the backend."
-                );
+                navigate("/matchmaking");
               }}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-blue-600 to-violet-600 py-3.5 text-sm font-bold text-white transition hover:opacity-90"
             >

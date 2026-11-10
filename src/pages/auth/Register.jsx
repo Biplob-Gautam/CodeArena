@@ -5,6 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import Logo from "../../components/Logo";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
+import authService from "../../services/authService";
+import authStore from "../../store/authStore";
 
 function Register() {
   const navigate = useNavigate();
@@ -18,8 +20,9 @@ function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -38,11 +41,20 @@ function Register() {
       return;
     }
 
-    // Demo registration only.
-    // Connect this form to your NestJS API later.
-    sessionStorage.setItem("demoUser", email);
-
-    navigate("/dashboard");
+    setIsSubmitting(true);
+    try {
+      const data = await authService.register({
+        email: email.trim(),
+        name: name.trim(),
+        password,
+      });
+      authStore.login(data.user, data.token);
+      navigate("/dashboard", { replace: true });
+    } catch (requestError) {
+      setError(requestError.message || "Unable to create your account. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -195,8 +207,9 @@ function Register() {
             )}
 
             {/* Register Button */}
-            <Button type="submit" className="mt-2">
-              Create Account <span>→</span>
+            <Button type="submit" className="mt-2" disabled={isSubmitting}>
+              {isSubmitting ? "Creating account..." : "Create Account"}
+              {!isSubmitting && <span>→</span>}
             </Button>
 
           </form>
