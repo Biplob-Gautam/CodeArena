@@ -23,13 +23,15 @@ export function generateSkillVector(playerData) {
   return postModel("/skill-vector", playerData, "Skill Vector Model Error");
 }
 
-export function recommendProblem(playerData) {
+export function selectProblem(payload) {
   return postModel(
-    "/recommend-problem",
-    playerData,
+    "/select-problem",
+    payload,
     "Problem Recommendation Model Error",
   );
 }
+
+export const recommendProblem = selectProblem;
 
 export function clusterTestcases(testcases) {
   return postModel(

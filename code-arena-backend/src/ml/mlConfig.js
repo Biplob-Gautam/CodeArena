@@ -15,7 +15,7 @@ if (!["http:", "https:"].includes(parsedBaseURL.protocol)) {
 
 const mlConfig = Object.freeze({
   baseURL: parsedBaseURL.href.replace(/\/+$/, ""),
-  timeout: 10000,
+  timeout: 2000,
 });
 
 export default mlConfig;
