@@ -6,29 +6,9 @@ const actions = [
     icon: "⚔",
     color: "blue",
   },
-  {
-    title: "Practice Problems",
-    description: "Improve your coding and problem-solving skills.",
-    icon: "⌘",
-    color: "purple",
-  },
-  {
-    title: "Leaderboard",
-    description: "Check your position among top players.",
-    icon: "♜",
-    color: "orange",
-  },
 ];
 
 function QuickActions({ onStartBattle }) {
-  const handleAction = (title) => {
-    if (title === "1v1 Battle") {
-      onStartBattle();
-    } else {
-      alert(`${title} page will be available soon!`);
-    }
-  };
-
   return (
     <section className="rounded-2xl border border-slate-800 bg-[#101827] p-5">
 
@@ -47,7 +27,7 @@ function QuickActions({ onStartBattle }) {
         {actions.map((action) => (
           <button
             key={action.title}
-            onClick={() => handleAction(action.title)}
+            onClick={onStartBattle}
             className="group flex w-full items-center gap-4 rounded-xl border border-transparent p-3 text-left transition hover:border-slate-700 hover:bg-slate-800/70"
           >
 

@@ -14,7 +14,7 @@ export async function findMatch(req, res) {
 
 export async function cancelMatch(req, res) {
   const result = await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(${matchmakingLockId})`;
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${matchmakingLockId})`;
 
     const participant = await tx.battleParticipant.findFirst({
       where: {

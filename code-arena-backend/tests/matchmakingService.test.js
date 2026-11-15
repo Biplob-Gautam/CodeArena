@@ -35,7 +35,7 @@ function setupMatch({
   let persistedProblemId = waitingBattle.problemId;
   let persistedDurationSeconds = waitingBattle.durationSeconds;
   const tx = {
-    $queryRaw: vi.fn().mockResolvedValue([]),
+    $executeRaw: vi.fn().mockResolvedValue(1),
     battleParticipant: {
       findFirst: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockResolvedValue({}),

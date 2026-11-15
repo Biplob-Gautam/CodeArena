@@ -53,7 +53,7 @@ function PlayerComparison({ players }) {
             </h3>
 
             <p className="mt-1 text-sm text-slate-400">
-              Rating: {player.rating}
+              Rating: {player.rating ?? "—"}
             </p>
             <p className="mt-1 text-xs text-slate-500">
               Latest submission: {player.submissionStatus}
@@ -72,9 +72,13 @@ function PlayerComparison({ players }) {
         {stats.map((stat) => {
           const player1Value = players[0][stat.key];
           const player2Value = players[1][stat.key];
+          const hasValues =
+            Number.isFinite(player1Value) && Number.isFinite(player2Value);
 
           const firstWins =
-            stat.key === "executionTime"
+            !hasValues
+              ? false
+              : stat.key === "executionTime"
               ? player1Value < player2Value
               : player1Value > player2Value;
 
@@ -90,30 +94,25 @@ function PlayerComparison({ players }) {
                     firstWins ? "text-blue-400" : "text-white"
                   }`}
                 >
-                  {player1Value}
-                  {stat.suffix}
+                  {player1Value == null ? "—" : `${player1Value}${stat.suffix}`}
                 </span>
 
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-800">
-                  <div
-                    className="flex h-full"
-                    style={{
-                      width: "100%",
-                    }}
-                  >
-                    <div
-                      className="h-full bg-blue-500"
-                      style={{
-                        width: `${
-                          (player1Value /
-                            (player1Value + player2Value || 1)) *
-                          100
-                        }%`,
-                      }}
-                    />
-
-                    <div className="h-full flex-1 bg-violet-500" />
-                  </div>
+                  {hasValues && (
+                    <div className="flex h-full w-full">
+                      <div
+                        className="h-full bg-blue-500"
+                        style={{
+                          width: `${
+                            (player1Value /
+                              (player1Value + player2Value || 1)) *
+                            100
+                          }%`,
+                        }}
+                      />
+                      <div className="h-full flex-1 bg-violet-500" />
+                    </div>
+                  )}
                 </div>
 
                 <span
@@ -121,8 +120,7 @@ function PlayerComparison({ players }) {
                     !firstWins ? "text-violet-400" : "text-white"
                   }`}
                 >
-                  {player2Value}
-                  {stat.suffix}
+                  {player2Value == null ? "—" : `${player2Value}${stat.suffix}`}
                 </span>
               </div>
             </div>

@@ -1,9 +1,10 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import MatchmakingLoader from "./components/MatchmakingLoader";
 import authService from "../../services/authService";
+import battleService from "../../services/battleService";
 import {
   connectSocket,
   disconnectSocket,
@@ -16,40 +17,60 @@ function Matchmaking() {
   const [status, setStatus] = useState("idle");
   const [player, setPlayer] = useState(null);
   const [error, setError] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const searchingRef = useRef(false);
+  const handledBattleIdRef = useRef(null);
 
   useEffect(() => {
     let active = true;
     connectSocket();
 
+    const setSearching = () => {
+      searchingRef.current = true;
+      setStatus("searching");
+    };
+    const setIdle = () => {
+      searchingRef.current = false;
+      setStatus("idle");
+    };
+    const handleMatched = (battle) => {
+      if (!active || !battle?.id || handledBattleIdRef.current === battle.id) {
+        return;
+      }
+      handledBattleIdRef.current = battle.id;
+      searchingRef.current = false;
+      navigate(`/battle/${battle.id}`, { replace: true });
+    };
+
     const onWaiting = () => {
-      if (active) setStatus("searching");
+      if (active && searchingRef.current) setSearching();
     };
     const onMatched = ({ battle } = {}) => {
-      if (!active || !battle?.id) return;
-      navigate(`/battle/${battle.id}`);
+      handleMatched(battle);
     };
     const onCancelled = () => {
-      if (active) setStatus("idle");
+      if (active) setIdle();
     };
     const onError = ({ message } = {}) => {
       if (!active) return;
       setError(message || "Matchmaking is unavailable. Please try again.");
-      setStatus("idle");
+      setIdle();
     };
     const onConnectError = () => {
       if (!active) return;
       setError("Could not connect to matchmaking. Check that the backend is running.");
-      setStatus("idle");
+      setIsConnected(false);
     };
 
     const removeListeners = [
       onSocket("matchmaking:waiting", onWaiting),
       onSocket("matchmaking:status", ({ status: nextStatus, battle } = {}) => {
         if (!active) return;
-        if (nextStatus === "MATCHED" && battle?.id) {
-          navigate(`/battle/${battle.id}`);
-        } else if (nextStatus === "WAITING") {
-          setStatus("searching");
+        if (nextStatus === "MATCHED") {
+          handleMatched(battle);
+        } else if (nextStatus === "WAITING" && searchingRef.current) {
+          setSearching();
         }
       }),
       onSocket("matchmaking:matched", onMatched),
@@ -57,7 +78,17 @@ function Matchmaking() {
       onSocket("matchmaking:error", onError),
       onSocket("connect_error", onConnectError),
       onSocket("connect", () => {
-        if (active) setError("");
+        if (!active) return;
+        setIsConnected(true);
+        setError("");
+        if (searchingRef.current) emitSocket("matchmaking:join");
+      }),
+      onSocket("disconnect", () => {
+        if (!active) return;
+        setIsConnected(false);
+        if (searchingRef.current) {
+          setError("Connection lost. Reconnecting to matchmaking...");
+        }
       }),
     ];
 
@@ -72,6 +103,11 @@ function Matchmaking() {
 
     return () => {
       active = false;
+      if (searchingRef.current) {
+        void battleService.cancelMatch().catch((requestError) => {
+          console.error("Could not cancel matchmaking while leaving:", requestError);
+        });
+      }
       removeListeners.forEach((remove) => remove());
       disconnectSocket();
     };
@@ -79,17 +115,38 @@ function Matchmaking() {
 
   const handleFindOpponent = () => {
     setError("");
-    setStatus("searching");
+    handledBattleIdRef.current = null;
+    searchingRef.current = true;
     if (!emitSocket("matchmaking:find")) {
+      searchingRef.current = false;
       setStatus("idle");
       setError("Matchmaking is still connecting. Please try again.");
+      return;
+    }
+    setStatus("searching");
+  };
+
+  const handleCancelSearch = async () => {
+    if (isCancelling) return;
+    setIsCancelling(true);
+    setError("");
+    try {
+      await battleService.cancelMatch();
+      searchingRef.current = false;
+      setStatus("idle");
+    } catch (requestError) {
+      setError(requestError.message || "Could not leave the matchmaking queue.");
+    } finally {
+      setIsCancelling(false);
     }
   };
 
-  const handleCancelSearch = () => {
-    if (!emitSocket("matchmaking:cancel")) {
-      setError("Matchmaking is not connected. Please try again.");
+  const handleBackToDashboard = async () => {
+    if (searchingRef.current) {
+      await handleCancelSearch();
+      if (searchingRef.current || handledBattleIdRef.current) return;
     }
+    navigate("/dashboard");
   };
 
   const username = player?.displayName || player?.username || "Loading...";
@@ -120,7 +177,8 @@ function Matchmaking() {
           </div>
 
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={handleBackToDashboard}
+            disabled={isCancelling}
             className="rounded-lg border border-slate-700 px-5 py-3 text-xs font-semibold text-slate-300 transition hover:border-blue-500 hover:text-white"
           >
             ← Back to Dashboard
@@ -196,7 +254,7 @@ function Matchmaking() {
 
               <div className="rounded-xl border border-slate-700 bg-[#080b14] p-4">
                 <p className="text-xl font-bold text-violet-400">
-                  15 Min
+                  Varies
                 </p>
 
                 <p className="mt-1 text-xs text-slate-500">
@@ -209,11 +267,26 @@ function Matchmaking() {
             {/* Find Opponent Button */}
             <button
               onClick={handleFindOpponent}
-              disabled={!player}
+              disabled={!player || !isConnected}
               className="mt-10 rounded-xl bg-linear-to-r from-blue-600 to-violet-600 px-10 py-4 text-sm font-extrabold text-white shadow-lg shadow-blue-500/20 transition hover:scale-105 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              ⚔ Find Opponent
+              {isConnected ? "⚔ Find Opponent" : "Connecting..."}
             </button>
+
+            {!player && error && (
+              <button
+                onClick={() => {
+                  setError("");
+                  authService
+                    .getCurrentUser()
+                    .then(({ user }) => setPlayer(user))
+                    .catch((requestError) => setError(requestError.message));
+                }}
+                className="mt-4 block w-full text-xs font-semibold text-blue-400 hover:text-blue-300"
+              >
+                Retry loading your profile
+              </button>
+            )}
 
             <p className="mt-4 text-[10px] text-slate-500">
               Matchmaking is based on player skill ratings.
@@ -227,6 +300,7 @@ function Matchmaking() {
           <MatchmakingLoader
             rating={rating}
             onCancel={handleCancelSearch}
+            cancelling={isCancelling}
           />
         )}
 

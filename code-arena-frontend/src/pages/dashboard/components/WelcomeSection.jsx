@@ -38,13 +38,6 @@ function WelcomeSection({ username, onStartBattle }) {
             <span>→</span>
           </button>
 
-          <button
-            onClick={() => alert("Practice Problems page coming soon!")}
-            className="rounded-xl border border-slate-600 bg-slate-900/40 px-5 py-3 text-sm font-semibold text-slate-300 transition hover:border-blue-400 hover:text-white"
-          >
-            Practice Problems
-          </button>
-
         </div>
       </div>
 

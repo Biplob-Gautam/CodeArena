@@ -46,18 +46,22 @@ function BattleResult() {
         return {
           username:
             player.user.displayName || player.user.username || "Player",
-          rating: Math.round(player.ratingBefore ?? player.user.rating ?? 1500),
+          rating:
+            player.ratingBefore == null ? null : Math.round(player.ratingBefore),
           testCases: submission?.passedTestCases ?? player.passedTestCases ?? 0,
-          executionTime: submission?.executionTimeMs
+          executionTime: submission?.executionTimeMs != null
             ? Number((submission.executionTimeMs / 1000).toFixed(3))
-            : 0,
+            : null,
           submissions: player.totalSubmissions,
           submissionStatus: player.latestSubmission?.status ?? "NO_SUBMISSIONS",
-          memoryUsedKb: submission?.memoryUsedKb ?? 0,
+          memoryUsedKb: submission?.memoryUsedKb ?? null,
           isWinner: player.result === "WIN",
-          previousRating: Math.round(player.ratingBefore ?? player.user.rating ?? 1500),
-          ratingChange: Math.round(player.ratingChange ?? 0),
-          newRating: Math.round(player.ratingAfter ?? player.user.rating ?? 1500),
+          previousRating:
+            player.ratingBefore == null ? null : Math.round(player.ratingBefore),
+          ratingChange:
+            player.ratingChange == null ? null : Math.round(player.ratingChange),
+          newRating:
+            player.ratingAfter == null ? null : Math.round(player.ratingAfter),
         };
       }),
     [battleResult],
@@ -66,11 +70,12 @@ function BattleResult() {
   const ownPlayer = battleResult?.players?.find(
     (player) => player.user?.id === currentUserId,
   );
-  const status = ownPlayer?.result === "WIN"
-    ? "won"
-    : ownPlayer?.result === "DRAW"
-    ? "draw"
-    : "lost";
+  const statusByResult = {
+    WIN: "won",
+    LOSS: "lost",
+    DRAW: "draw",
+  };
+  const status = statusByResult[ownPlayer?.result];
   const startsAt = battleResult?.startsAt
     ? new Date(battleResult.startsAt)
     : null;
@@ -100,12 +105,18 @@ function BattleResult() {
     );
   }
 
-  if (!battleId || error || battleResult?.status !== "COMPLETED") {
+  const resultIsIncomplete =
+    battleResult?.status === "COMPLETED" &&
+    (!status || battleResult.players?.length !== 2);
+
+  if (!battleId || error || battleResult?.status !== "COMPLETED" || resultIsIncomplete) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#080b14] px-4 text-center text-white">
         <p role="alert" className="text-red-400">
           {error || (!battleId
             ? "A battle ID is required to view results."
+            : resultIsIncomplete
+            ? "Complete result data is not available for this battle."
             : "This battle has not completed yet.")}
         </p>
         <button

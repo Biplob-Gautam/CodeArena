@@ -12,13 +12,13 @@ const starterCode = {
         return new int[]{};
     }
 }`,
-  "C++": `class Solution {
-public:
-    vector<int> twoSum(vector<int>& nums, int target) {
-        // Write your solution here
-        return {};
-    }
-};`,
+  "C++": `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    // Read input from stdin and write output to stdout.
+    return 0;
+}`,
   C: `// Write your solution here
 
 `,

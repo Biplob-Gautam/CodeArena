@@ -25,11 +25,9 @@ function BattleRoom({ onExit }) {
   const [onlineUsers, setOnlineUsers] = useState(() => new Set());
   const [socketError, setSocketError] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
-  const [language, setLanguage] = useState("JavaScript");
+  const [language, setLanguage] = useState("C++");
 
-  const [code, setCode] = useState(
-    starterCode.JavaScript
-  );
+  const [code, setCode] = useState(starterCode["C++"]);
 
   const [submission, setSubmission] = useState(null);
 
@@ -37,6 +35,8 @@ function BattleRoom({ onExit }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isMounted = useRef(false);
+  const submissionInFlightRef = useRef(false);
+  const resultNavigatedRef = useRef(false);
 
   useEffect(() => {
     isMounted.current = true;
@@ -49,7 +49,15 @@ function BattleRoom({ onExit }) {
     if (!battleId) return undefined;
 
     let active = true;
+    resultNavigatedRef.current = false;
     const socket = connectSocket();
+    const navigateToResult = () => {
+      if (resultNavigatedRef.current) return;
+      resultNavigatedRef.current = true;
+      navigate(`/result?battleId=${encodeURIComponent(battleId)}`, {
+        replace: true,
+      });
+    };
     const updateBattle = (nextBattle) => {
       if (!active || nextBattle?.id !== battleId) return;
       const remainingSeconds = nextBattle.startsAt
@@ -66,7 +74,7 @@ function BattleRoom({ onExit }) {
       setBattle({ ...nextBattle, remainingSeconds });
       setSocketError("");
       if (nextBattle.status === "COMPLETED") {
-        navigate(`/result?battleId=${encodeURIComponent(battleId)}`);
+        navigateToResult();
       }
     };
     const joinBattle = () => socket.emit("battle:join", { battleId });
@@ -103,13 +111,16 @@ function BattleRoom({ onExit }) {
       }),
       onSocket("battle:completed", ({ battleId: completedBattleId } = {}) => {
         if (active && completedBattleId === battleId) {
-          navigate(`/result?battleId=${encodeURIComponent(battleId)}`);
+          navigateToResult();
         }
       }),
       onSocket("connect_error", () => {
         if (active) setSocketError("Could not connect to the battle server.");
       }),
       onSocket("connect", handleConnect),
+      onSocket("disconnect", () => {
+        if (active) setSocketError("Connection lost. Reconnecting to the battle...");
+      }),
     ];
 
     if (socket.connected) joinBattle();
@@ -125,9 +136,9 @@ function BattleRoom({ onExit }) {
   const currentParticipant = participants.find(
     (participant) => participant.userId === currentUserId,
   );
-  const opponent = participants.find(
-    (participant) => participant.userId !== currentUserId,
-  );
+  const opponent = currentUserId
+    ? participants.find((participant) => participant.userId !== currentUserId)
+    : null;
   const problem = useMemo(() => {
     if (!battle?.problem) return null;
     return {
@@ -149,11 +160,13 @@ function BattleRoom({ onExit }) {
     if (
       !code.trim() ||
       isSubmitting ||
+      submissionInFlightRef.current ||
       battle.status !== "IN_PROGRESS" ||
       battle.remainingSeconds <= 0
     ) {
       return;
     }
+    submissionInFlightRef.current = true;
     setIsSubmitting(true);
     let latest;
     try {
@@ -168,10 +181,14 @@ function BattleRoom({ onExit }) {
         });
         setIsSubmitting(false);
       }
+      submissionInFlightRef.current = false;
       return;
     }
 
-    if (!isMounted.current) return;
+    if (!isMounted.current) {
+      submissionInFlightRef.current = false;
+      return;
+    }
     setSubmission(latest);
     setSubmissions((previous) => previous + 1);
 
@@ -200,6 +217,7 @@ function BattleRoom({ onExit }) {
         });
       }
     } finally {
+      submissionInFlightRef.current = false;
       if (isMounted.current) setIsSubmitting(false);
     }
   };

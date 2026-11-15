@@ -7,7 +7,9 @@ function RatingChange({ players }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         {players.map((player) => {
-          const increased = player.ratingChange >= 0;
+          const hasRatingChange = Number.isFinite(player.ratingChange);
+          const increased = hasRatingChange && player.ratingChange > 0;
+          const decreased = hasRatingChange && player.ratingChange < 0;
 
           return (
             <div
@@ -37,7 +39,7 @@ function RatingChange({ players }) {
                   </p>
 
                   <p className="mt-1 text-lg font-semibold text-white">
-                    {player.previousRating}
+                    {player.previousRating ?? "—"}
                   </p>
                 </div>
 
@@ -48,11 +50,15 @@ function RatingChange({ players }) {
 
                   <p
                     className={`mt-1 text-lg font-bold ${
-                      increased ? "text-green-400" : "text-red-400"
+                      increased
+                        ? "text-green-400"
+                        : decreased
+                          ? "text-red-400"
+                          : "text-slate-300"
                     }`}
                   >
                     {increased ? "+" : ""}
-                    {player.ratingChange}
+                    {player.ratingChange ?? "—"}
                   </p>
                 </div>
 
@@ -62,7 +68,7 @@ function RatingChange({ players }) {
                   </p>
 
                   <p className="mt-1 text-lg font-semibold text-white">
-                    {player.newRating}
+                    {player.newRating ?? "—"}
                   </p>
                 </div>
               </div>
@@ -71,10 +77,18 @@ function RatingChange({ players }) {
                 className={`mt-4 rounded-lg px-3 py-2 text-center text-sm font-medium ${
                   increased
                     ? "bg-green-500/10 text-green-400"
-                    : "bg-red-500/10 text-red-400"
+                    : decreased
+                      ? "bg-red-500/10 text-red-400"
+                      : "bg-slate-500/10 text-slate-300"
                 }`}
               >
-                {increased ? "↑ Rating Increased" : "↓ Rating Decreased"}
+                {increased
+                  ? "↑ Rating Increased"
+                  : decreased
+                    ? "↓ Rating Decreased"
+                    : hasRatingChange
+                      ? "Rating Unchanged"
+                      : "Rating change unavailable"}
               </div>
             </div>
           );

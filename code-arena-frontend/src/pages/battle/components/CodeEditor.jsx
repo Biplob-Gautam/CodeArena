@@ -43,6 +43,7 @@ function CodeEditor({
 
         <button
           onClick={resetCode}
+          disabled={disabled}
           className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-400 transition hover:border-blue-500 hover:text-white"
         >
           Reset Code
@@ -68,6 +69,7 @@ function CodeEditor({
           autoCapitalize="off"
           autoComplete="off"
           autoCorrect="off"
+          disabled={disabled}
           aria-label="Code editor"
           placeholder="Write your solution here..."
           className="min-h-100 w-full resize-none bg-transparent p-4 font-mono text-sm leading-6 text-green-300 outline-none placeholder:text-slate-600"

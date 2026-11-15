@@ -45,7 +45,7 @@ export async function getBattleForSocket(userId, battleId) {
 
   const battle = await prisma.battle.findUnique({
     where: { id: battleId },
-    include: battleSelect,
+    select: battleSelect,
   });
 
   if (!battle) {

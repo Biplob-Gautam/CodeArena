@@ -2,9 +2,6 @@
 const menuItems = [
   { name: "Dashboard", icon: "▦" },
   { name: "Battle Arena", icon: "⚔", badge: "LIVE" },
-  { name: "Problems", icon: "⌘" },
-  { name: "Leaderboard", icon: "♜" },
-  { name: "Battle History", icon: "◷" },
 ];
 
 function Sidebar({ activePage, onNavigate }) {
@@ -55,25 +52,6 @@ function Sidebar({ activePage, onNavigate }) {
             </button>
           ))}
         </nav>
-      </div>
-
-      {/* Preferences */}
-      <div className="mt-10">
-        <p className="mb-4 px-3 text-[10px] font-bold tracking-[2px] text-slate-500">
-          PREFERENCES
-        </p>
-
-        <button
-          onClick={() => onNavigate("Settings")}
-          className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${
-            activePage === "Settings"
-              ? "bg-blue-500/10 text-blue-400"
-              : "text-slate-400 hover:bg-slate-800 hover:text-white"
-          }`}
-        >
-          <span className="w-6 text-center text-lg">⚙</span>
-          Settings
-        </button>
       </div>
 
       {/* Bottom Section */}

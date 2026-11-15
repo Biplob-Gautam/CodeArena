@@ -36,7 +36,7 @@ export function connectSocket() {
 }
 
 export function emitSocket(event, data = {}) {
-  if (!socket) return false;
+  if (!socket?.connected) return false;
   socket.emit(event, data);
   return true;
 }

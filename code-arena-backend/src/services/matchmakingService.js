@@ -90,7 +90,7 @@ async function createWaitingBattle(tx, userId) {
 async function discoverMatch(user) {
   return prisma.$transaction(
     async (tx) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(${matchmakingLockId})`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${matchmakingLockId})`;
 
       const existing = await findExistingBattle(tx, user.id);
       if (existing) return { result: existing };
@@ -218,7 +218,7 @@ async function requestProblemRecommendation(user, candidate) {
 async function finalizeMatch(user, candidate, recommendedProblemId) {
   return prisma.$transaction(
     async (tx) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(${matchmakingLockId})`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${matchmakingLockId})`;
 
       const existing = await findExistingBattle(tx, user.id);
       if (existing) return { result: existing };
@@ -313,7 +313,7 @@ export async function findMatch(userId) {
     return retrySerializationConflict(() =>
       prisma.$transaction(
         async (tx) => {
-          await tx.$queryRaw`SELECT pg_advisory_xact_lock(${matchmakingLockId})`;
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(${matchmakingLockId})`;
           const existing = await findExistingBattle(tx, user.id);
           return existing ?? createWaitingBattle(tx, user.id);
         },
@@ -330,7 +330,7 @@ export async function findMatch(userId) {
 
 export async function cancelMatch(userId) {
   return prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(${matchmakingLockId})`;
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${matchmakingLockId})`;
     const participant = await tx.battleParticipant.findFirst({
       where: { userId, battle: { status: "WAITING" } },
       include: { battle: { include: { participants: true } } },

@@ -2,6 +2,7 @@
 function MatchmakingLoader({
   rating = 1420,
   onCancel,
+  cancelling = false,
 }) {
   return (
     <div className="flex min-h-105 flex-col items-center justify-center rounded-2xl border border-slate-800 bg-[#101827] p-8 text-center">
@@ -49,9 +50,10 @@ function MatchmakingLoader({
 
       <button
         onClick={onCancel}
+        disabled={cancelling}
         className="mt-8 rounded-lg border border-red-500/30 px-6 py-3 text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
       >
-        Cancel Search
+        {cancelling ? "Leaving Queue..." : "Cancel Search"}
       </button>
 
     </div>

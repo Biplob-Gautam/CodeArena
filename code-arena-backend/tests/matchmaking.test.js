@@ -83,7 +83,7 @@ describe("matchmaking controller", () => {
   it("returns a cancellation response when no pending request exists", async () => {
     prisma.$transaction.mockImplementation(async (callback) =>
       callback({
-        $queryRaw: vi.fn(),
+        $executeRaw: vi.fn().mockResolvedValue(1),
         battleParticipant: {
           findFirst: vi.fn()
             .mockResolvedValueOnce(null)
