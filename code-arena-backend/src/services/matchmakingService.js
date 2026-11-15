@@ -27,7 +27,7 @@ const matchmakingBattleInclude = {
   },
 };
 
-function getMlTopic(tags) {
+export function getMlTopic(tags) {
   let selected = null;
   for (const tag of tags ?? []) {
     const mapped = mlTopicByProblemTag[tag.trim().toLowerCase()];

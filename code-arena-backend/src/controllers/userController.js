@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import { getPlayerInsights } from "../services/playerInsightsService.js";
 import ApiError from "../utils/ApiError.js";
 
 const publicUserSelect = {
@@ -100,6 +101,11 @@ export async function getMyStats(req, res) {
   });
 }
 
+export async function getMyInsights(req, res) {
+  const insights = await getPlayerInsights(req.user.id);
+  return res.json({ success: true, insights });
+}
+
 export async function getUserById(req, res) {
   const { userId } = req.params;
   if (!userId) throw new ApiError(400, "A user ID is required.");
@@ -138,4 +144,10 @@ export async function getUserById(req, res) {
   });
 }
 
-export default { getMyProfile, updateMyProfile, getMyStats, getUserById };
+export default {
+  getMyProfile,
+  updateMyProfile,
+  getMyStats,
+  getMyInsights,
+  getUserById,
+};

@@ -7,6 +7,7 @@ sentence in "messages" is generated from a number you can also read in the outpu
 Inputs (sent by the backend, which owns the database):
   submissions: [{"difficulty", "topic", "accepted", "solveTimeSec", "matchIndex"}, ...]
                one row per battle the player took part in (one problem per battle)
+               topic may be None when the problem has no recognized topic.
   matches:     optional, [{"matchIndex", "result": "WIN"|"LOSS"|"DRAW",
                            "ratingAfter", "problemTitle", "predictedWinProb"}, ...]
                "predictedWinProb" is Model 4's pre-match P(win), stored at match start.
@@ -46,6 +47,43 @@ def _topic_trend(rows):
     return _acc(rows[-half:]) - _acc(rows[:half])
 
 
+def _add_match_insights(out, matches, msgs):
+    if not matches:
+        return
+
+    ms = sorted(matches, key=lambda m: m["matchIndex"])
+    res = [m["result"] for m in ms]
+    out["record"] = {"wins": res.count("WIN"), "losses": res.count("LOSS"), "draws": res.count("DRAW"),
+                     "winRate": round(res.count("WIN") / len(res), 3)}
+    out["ratingHistory"] = [{"matchIndex": m["matchIndex"], "rating": m.get("ratingAfter"),
+                             "problem": m.get("problemTitle"), "result": m["result"]} for m in ms]
+
+    score = {"WIN": 1.0, "DRAW": 0.5, "LOSS": 0.0}
+    windows = []
+    usable = [m for m in ms if m.get("predictedWinProb") is not None]
+    for i in range(0, len(usable) - EXPECTATION_WINDOW + 1, EXPECTATION_WINDOW):
+        w = usable[i:i + EXPECTATION_WINDOW]
+        actual = statistics.mean(score[m["result"]] for m in w)
+        predicted = statistics.mean(m["predictedWinProb"] for m in w)
+        windows.append({"fromMatch": w[0]["matchIndex"], "toMatch": w[-1]["matchIndex"],
+                        "actualWinRate": round(actual, 3), "predictedWinRate": round(predicted, 3),
+                        "difference": round(actual - predicted, 3)})
+    out["performanceVsExpectation"] = windows
+    if windows:
+        last = windows[-1]
+        if last["difference"] >= EXPECTATION_THRESHOLD:
+            label = "OVERPERFORMING"
+            msgs.append(f"You're outperforming your rating: over your last {EXPECTATION_WINDOW} matches you "
+                        f"won {_pct(last['actualWinRate'])}% vs {_pct(last['predictedWinRate'])}% expected.")
+        elif last["difference"] <= -EXPECTATION_THRESHOLD:
+            label = "UNDERPERFORMING"
+            msgs.append(f"You're below expectation: over your last {EXPECTATION_WINDOW} matches you "
+                        f"won {_pct(last['actualWinRate'])}% vs {_pct(last['predictedWinRate'])}% expected.")
+        else:
+            label = "AS_EXPECTED"
+        out["performanceLabel"] = label
+
+
 def compute_insights(submissions, matches=None):
     subs = sorted(submissions, key=lambda s: s["matchIndex"])
     n = len(subs)
@@ -54,6 +92,7 @@ def compute_insights(submissions, matches=None):
 
     if n == 0:
         msgs.append("No battles yet. Play your first match to start building your profile.")
+        _add_match_insights(out, matches, msgs)
         return out
     if not out["ready"]:
         msgs.append(f"Play {MIN_ATTEMPTS_FOR_INSIGHTS - n} more match(es) to unlock your insights.")
@@ -74,7 +113,10 @@ def compute_insights(submissions, matches=None):
         }
 
     # ---- topic performance (smoothed) --------------------------------------------------
-    by_topic = _group(subs, "topic")
+    by_topic = _group(
+        [row for row in subs if isinstance(row.get("topic"), str) and row["topic"]],
+        "topic",
+    )
     topics = {}
     for t, rows in by_topic.items():
         solved = sum(r["accepted"] for r in rows)
@@ -143,37 +185,6 @@ def compute_insights(submissions, matches=None):
         msgs.append(f"Slipping in: {', '.join(out['decliningTopics'])}.")
 
     # ---- matches: record, rating history, performance vs expectation --------------------
-    if matches:
-        ms = sorted(matches, key=lambda m: m["matchIndex"])
-        res = [m["result"] for m in ms]
-        out["record"] = {"wins": res.count("WIN"), "losses": res.count("LOSS"), "draws": res.count("DRAW"),
-                         "winRate": round(res.count("WIN") / len(res), 3)}
-        out["ratingHistory"] = [{"matchIndex": m["matchIndex"], "rating": m.get("ratingAfter"),
-                                 "problem": m.get("problemTitle"), "result": m["result"]} for m in ms]
-
-        score = {"WIN": 1.0, "DRAW": 0.5, "LOSS": 0.0}
-        windows = []
-        usable = [m for m in ms if m.get("predictedWinProb") is not None]
-        for i in range(0, len(usable) - EXPECTATION_WINDOW + 1, EXPECTATION_WINDOW):
-            w = usable[i:i + EXPECTATION_WINDOW]
-            actual = statistics.mean(score[m["result"]] for m in w)
-            predicted = statistics.mean(m["predictedWinProb"] for m in w)
-            windows.append({"fromMatch": w[0]["matchIndex"], "toMatch": w[-1]["matchIndex"],
-                            "actualWinRate": round(actual, 3), "predictedWinRate": round(predicted, 3),
-                            "difference": round(actual - predicted, 3)})
-        out["performanceVsExpectation"] = windows
-        if windows:
-            last = windows[-1]
-            if last["difference"] >= EXPECTATION_THRESHOLD:
-                label = "OVERPERFORMING"
-                msgs.append(f"You're outperforming your rating: over your last {EXPECTATION_WINDOW} matches you "
-                            f"won {_pct(last['actualWinRate'])}% vs {_pct(last['predictedWinRate'])}% expected.")
-            elif last["difference"] <= -EXPECTATION_THRESHOLD:
-                label = "UNDERPERFORMING"
-                msgs.append(f"You're below expectation: over your last {EXPECTATION_WINDOW} matches you "
-                            f"won {_pct(last['actualWinRate'])}% vs {_pct(last['predictedWinRate'])}% expected.")
-            else:
-                label = "AS_EXPECTED"
-            out["performanceLabel"] = label
+    _add_match_insights(out, matches, msgs)
 
     return out

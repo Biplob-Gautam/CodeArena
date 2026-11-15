@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import {
   getMyProfile,
+  getMyInsights,
   getMyStats,
   getUserById,
   updateMyProfile,
@@ -26,6 +27,7 @@ const profileSchema = z.object({
 router.use(authenticate);
 router.get("/me", getMyProfile);
 router.get("/me/stats", getMyStats);
+router.get("/me/insights", getMyInsights);
 router.put("/me", validate(profileSchema), updateMyProfile);
 router.get("/:userId", getUserById);
 
